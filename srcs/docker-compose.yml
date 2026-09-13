@@ -1,0 +1,78 @@
+services:
+  mariadb:
+    build: requirements/mariadb
+    container_name: mariadb
+    networks:
+      - inception
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    env_file: .env
+    expose:
+      - "${DB_PORT}"
+    environment:
+      SQL_ROOT_PASSWORD_FILE: /run/secrets/SQL_ROOT_PASSWORD
+      SQL_PASSWORD_FILE: /run/secrets/SQL_PASSWORD
+    secrets:
+      - SQL_ROOT_PASSWORD
+      - SQL_PASSWORD
+    restart: always
+  wordpress:
+    build: requirements/wordpress
+    container_name: wordpress
+    depends_on:
+      - mariadb
+    networks:
+      - inception
+    volumes:
+      - wordpress_data:/var/www/html
+    env_file: .env
+    environment:
+      SQL_PASSWORD_FILE: /run/secrets/SQL_PASSWORD
+      ADMIN_PASSWORD_FILE: /run/secrets/ADMIN_PASSWORD
+      USER_PASSWORD_FILE: /run/secrets/USER_PASSWORD
+    secrets:
+      - SQL_PASSWORD
+      - ADMIN_PASSWORD
+      - USER_PASSWORD
+    restart: always
+
+  nginx:
+    build: requirements/nginx
+    container_name: nginx
+    depends_on:
+      - wordpress
+    ports:
+      - "443:443"
+    networks:
+      - inception
+    volumes:
+      - wordpress_data:/var/www/html
+    env_file: .env
+    restart: always
+
+networks:
+  inception:
+    driver: bridge
+
+volumes:
+  mariadb_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/msamaali42/data/mariadb
+  wordpress_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/msamaali42/data/wordpress
+secrets:
+  SQL_PASSWORD:
+    file: ../secrets/db_password.txt
+  SQL_ROOT_PASSWORD:
+    file: ../secrets/db_root_password.txt
+  ADMIN_PASSWORD:
+    file: ../secrets/credentials.txt
+  USER_PASSWORD:
+    file: ../secrets/user_password.txt
