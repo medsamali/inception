@@ -38,6 +38,7 @@ RUN wget  https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.p
 
 
 
+
 RUN sed -i 's|^listen = .*|listen = 9000|' /etc/php/8.3/fpm/pool.d/www.conf
 
 RUN mkdir -p /run/php
